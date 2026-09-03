@@ -10,6 +10,7 @@ from datetime import datetime, date, time as dtime
 from typing import Optional
 
 import config
+from utils.timezone import local_now
 
 
 def _parse_hhmm(value: str) -> dtime:
@@ -48,7 +49,7 @@ def compute_live_elapsed_hours(check_in: Optional[datetime], check_out: Optional
     real-time 'hours worked so far' display in the UI."""
     if not check_in:
         return 0.0
-    end = check_out or datetime.now()
+    end = check_out or local_now()
     delta = end - check_in
     hours = delta.total_seconds() / 3600.0
     return round(max(hours, 0.0), 2)
