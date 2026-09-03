@@ -14,6 +14,7 @@ from database.db_setup import get_session
 from database.models import Employee, Attendance
 from utils.auth import require_login, is_admin, current_employee_id
 from utils.calculations import evaluate_attendance
+from utils.timezone import local_now
 from utils.ui import inject_global_css, render_sidebar_brand, hero, section_title, status_badge
 
 st.set_page_config(page_title="Mark Attendance", page_icon="🕒", layout="wide")
@@ -69,7 +70,7 @@ with c1:
         if not record:
             record = Attendance(employee_id=employee.id, date=target_date)
             session.add(record)
-        record.check_in = datetime.combine(target_date, datetime.now().time())
+        record.check_in = datetime.combine(target_date, local_now().time())
         result = evaluate_attendance(record.check_in, record.check_out, employee)
         for k, v in result.items():
             setattr(record, k, v)
@@ -80,7 +81,7 @@ with c1:
 with c2:
     if st.button("🚪 Check Out", width='stretch',
                  disabled=not (record and record.check_in) or bool(record and record.check_out)):
-        record.check_out = datetime.combine(target_date, datetime.now().time())
+        record.check_out = datetime.combine(target_date, local_now().time())
         result = evaluate_attendance(record.check_in, record.check_out, employee)
         for k, v in result.items():
             setattr(record, k, v)
