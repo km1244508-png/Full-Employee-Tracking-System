@@ -14,6 +14,7 @@ from utils.auth import (
     require_login, is_admin, current_user_id, change_password,
     create_user_and_employee, set_employee_active, reset_password,
 )
+from utils.qr_utils import generate_qr_image_bytes
 from utils.ui import inject_global_css, render_sidebar_brand, hero, section_title, status_badge
 
 st.set_page_config(page_title="Employee Management", page_icon="👥", layout="wide")
@@ -59,6 +60,16 @@ if is_admin():
                         if st.button("Reactivate", key=f"react_{emp.id}"):
                             set_employee_active(emp.id, True)
                             st.rerun()
+
+                # QR code viewer — admin can pull up any employee's
+                # permanent attendance QR (e.g. to show/print it for
+                # them when they're first set up).
+                with st.expander(f"📷 View QR — {emp.full_name}", expanded=False):
+                    st.image(
+                        generate_qr_image_bytes(emp.id),
+                        caption=f"{emp.full_name}'s permanent attendance QR",
+                        width=200,
+                    )
 
     with tabs[1]:
         section_title("Add New Employee", "➕")

@@ -48,7 +48,6 @@ ACCENT_PALETTE = ["#6366F1", "#10B981", "#38BDF8", "#F59E0B", "#F472B6", "#2DD4B
 
 STATUS_COLORS = {
     "Present": EMERALD,
-    "Late": AMBER,
     "Half-Day": "#FB923C",
     "Absent": ROSE,
     "Not Started": TEXT_FAINT,

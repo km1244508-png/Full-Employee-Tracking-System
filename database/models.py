@@ -42,6 +42,7 @@ class Employee(Base):
     shift_start = Column(String(5))  # "HH:MM", overrides config default if set
     shift_end = Column(String(5))
     is_active = Column(Boolean, default=True, nullable=False)
+    qr_token = Column(String(64), unique=True, index=True)  # permanent attendance QR
 
     user = relationship("User", back_populates="employee")
     attendance_records = relationship(
@@ -61,7 +62,7 @@ class Attendance(Base):
     check_in = Column(DateTime)
     check_out = Column(DateTime)
     hours_worked = Column(Float, default=0.0)
-    status = Column(String(20), default="Absent")  # Present/Late/Half-Day/Absent
+    status = Column(String(20), default="Absent")  # Present/Half-Day/Absent
     is_late = Column(Boolean, default=False)
     overtime_hours = Column(Float, default=0.0)
     notes = Column(Text)

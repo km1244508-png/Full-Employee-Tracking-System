@@ -55,14 +55,14 @@ def compute_live_elapsed_hours(check_in: Optional[datetime], check_out: Optional
     return round(max(hours, 0.0), 2)
 
 
-def compute_lateness(check_in: Optional[datetime], employee) -> bool:
-    """True if check-in is later than shift start + grace period."""
+def compute_lateness_minutes(check_in: Optional[datetime], employee) -> float:
+    """Minutes late relative to shift start. 0 or negative = on time/early."""
     if not check_in:
-        return False
+        return 0.0
     shift_start, _ = get_shift_bounds(employee)
     scheduled = datetime.combine(check_in.date(), shift_start)
-    grace_cutoff = scheduled.timestamp() + config.GRACE_PERIOD_MINUTES * 60
-    return check_in.timestamp() > grace_cutoff
+    delta_minutes = (check_in - scheduled).total_seconds() / 60
+    return round(delta_minutes, 2)
 
 
 def compute_overtime(hours_worked: float) -> float:
@@ -72,49 +72,42 @@ def compute_overtime(hours_worked: float) -> float:
 
 
 def compute_status(check_in: Optional[datetime], check_out: Optional[datetime],
-                    hours_worked: float, is_late: bool) -> str:
+                    hours_worked: float, late_by_minutes: float) -> str:
     """
-    Present / Late / Half-Day / Absent.
+    Present / Absent (no check-in OR too late) / Half-Day.
 
-    FIX: previously this only looked at `hours_worked`, which is always
-    0 while a shift is still in progress (before check-out) — so every
-    employee showed as "Absent" the moment they checked in, even if
-    they were actually on-time or late. Now:
-
-      - no check-in at all              -> Absent
-      - checked in, not checked out yet -> Present or Late (live),
-                                            based on whether they were
-                                            late at check-in
-      - checked out, but total hours
-        below half-day threshold        -> Half-Day
-      - checked out, was late at
-        check-in                        -> Late
-      - checked out, on time            -> Present
+    "Late" status removed — beyond GRACE_PERIOD_MINUTES, employee is
+    marked Absent directly. Working hours are calculated completely
+    separately (compute_hours_worked) and are NEVER zeroed out by
+    this status — an employee marked Absent for lateness still gets
+    their actual worked hours logged and shown.
     """
     if not check_in:
         return "Absent"
 
+    if late_by_minutes > config.GRACE_PERIOD_MINUTES:
+        return "Absent"
+
     if not check_out:
-        # Shift still in progress — reflect lateness immediately,
-        # don't wait for check-out to know the status.
-        return "Late" if is_late else "Present"
+        return "Present"
 
     if hours_worked < config.HALF_DAY_THRESHOLD_HOURS:
         return "Half-Day"
-    if is_late:
-        return "Late"
+
     return "Present"
 
 
 def evaluate_attendance(check_in: Optional[datetime], check_out: Optional[datetime], employee) -> dict:
     """Run the full pipeline and return all derived attendance fields."""
     hours_worked = compute_hours_worked(check_in, check_out)
-    is_late = compute_lateness(check_in, employee)
+    late_by_minutes = compute_lateness_minutes(check_in, employee)
+    is_late = late_by_minutes > config.GRACE_PERIOD_MINUTES
     overtime = compute_overtime(hours_worked)
-    status = compute_status(check_in, check_out, hours_worked, is_late)
+    status = compute_status(check_in, check_out, hours_worked, late_by_minutes)
     return {
         "hours_worked": hours_worked,
         "is_late": is_late,
+        "late_by_minutes": late_by_minutes,
         "overtime_hours": overtime,
         "status": status,
     }

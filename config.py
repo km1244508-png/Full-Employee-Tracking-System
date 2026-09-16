@@ -24,30 +24,28 @@ COMPANY_NAME = os.environ.get("COMPANY_NAME", "Your Company")
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
-# Local/dev default: SQLite file in the project folder.
-# Production: set DATABASE_URL env var to a PostgreSQL connection string
-# (e.g. Supabase / Neon). No code changes needed anywhere else.
 DATABASE_URL = os.environ.get("DATABASE_URL") or "sqlite:///attendance.db"
 
 # ---------------------------------------------------------------------------
 # Attendance business rules
 # ---------------------------------------------------------------------------
-# Standard shift start time used when an employee has no custom shift set.
 DEFAULT_SHIFT_START = "09:00"   # 24hr HH:MM
 DEFAULT_SHIFT_END = "18:00"     # 24hr HH:MM
 
-# Minutes of lateness allowed before an employee is marked "Late".
+# Minutes of lateness allowed before an employee is marked "Absent".
 GRACE_PERIOD_MINUTES = 10
 
-# Hours worked beyond this in a single day count as overtime.
 OVERTIME_THRESHOLD_HOURS = 8.0
-
-# An employee who works fewer than this many hours (but more than 0)
-# is marked "Half-Day" instead of "Present".
 HALF_DAY_THRESHOLD_HOURS = 4.0
-
-# Days of the week considered working days (0=Monday ... 6=Sunday).
 WORKING_DAYS = [0, 1, 2, 3, 4, 5]  # Mon-Sat; change to [0,1,2,3,4] for Mon-Fri
+
+# ---------------------------------------------------------------------------
+# QR Attendance (employee QR codes, USB scanner check-in/check-out)
+# ---------------------------------------------------------------------------
+# CRITICAL: this must be a long random secret, and must NOT be committed
+# to git. Set it as a real environment variable / Streamlit secret in
+# production. If this leaks, someone could forge QR tokens.
+QR_SECRET_KEY = os.environ.get("QR_SECRET_KEY", "change-this-in-production")
 
 # ---------------------------------------------------------------------------
 # Work Progress (task tracking) rules
@@ -67,3 +65,6 @@ ROLE_EMPLOYEE = "Employee"
 # Export settings
 # ---------------------------------------------------------------------------
 EXPORT_DIR = os.environ.get("EXPORT_DIR", "exports")
+
+# QR Attendance secret
+QR_SECRET_KEY = os.environ.get("QR_SECRET_KEY", "change-this-in-production")

@@ -14,6 +14,7 @@ from database.db_setup import get_session
 from database.models import Employee, Attendance
 from utils.auth import require_login, is_admin, current_employee_id
 from utils.calculations import evaluate_attendance
+from utils.qr_utils import get_or_create_qr_token, make_qr_png
 from utils.timezone import local_now
 from utils.ui import inject_global_css, render_sidebar_brand, hero, section_title, status_badge
 
@@ -43,6 +44,15 @@ else:
         st.error("No employee profile linked to this account.")
         st.stop()
     st.markdown(f"Marking attendance for **{employee.full_name}**")
+
+with st.expander("📷 My QR Code (for gate scanner)", expanded=True):
+    qr_token = get_or_create_qr_token(employee)
+    qr_png = make_qr_png(qr_token)
+    st.image(qr_png, caption=f"{employee.full_name}'s permanent attendance QR", width=280)
+    st.caption(
+        "Show this on your phone screen to the scanner at the gate to check in / check out. "
+        "This QR never changes."
+    )
 
 target_date = st.date_input("Date", value=date.today())
 

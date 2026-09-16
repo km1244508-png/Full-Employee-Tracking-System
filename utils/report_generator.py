@@ -68,7 +68,15 @@ def individual_report(employee_id: int, start: date, end: date) -> pd.DataFrame:
 
 
 def comparative_report(start: date, end: date) -> pd.DataFrame:
-    """One row per employee: totals + attendance % over the date range."""
+    """One row per employee: totals + attendance % over the date range.
+
+    NOTE: "Late" status was removed from the attendance status pipeline
+    (utils/calculations.py) — an employee more than GRACE_PERIOD_MINUTES
+    late is now marked "Absent" directly, not "Late". So Days_Present
+    and Days_Absent below only ever see: Present / Half-Day / Absent.
+    The old Days_Late column has been removed since it would always be
+    0 and was misleading to show on a report.
+    """
     session = get_session()
     rows = _base_query(session, start, end).all()
     df = _to_dataframe(rows)
@@ -80,8 +88,7 @@ def comparative_report(start: date, end: date) -> pd.DataFrame:
     summary = (
         df.groupby(["Employee", "Department"])
         .agg(
-            Days_Present=("Status", lambda s: (s == "Present").sum() + (s == "Late").sum() + (s == "Half-Day").sum()),
-            Days_Late=("Status", lambda s: (s == "Late").sum()),
+            Days_Present=("Status", lambda s: (s == "Present").sum() + (s == "Half-Day").sum()),
             Days_Absent=("Status", lambda s: (s == "Absent").sum()),
             Total_Hours=("Hours Worked", "sum"),
             Total_Overtime=("Overtime", "sum"),

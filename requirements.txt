@@ -9,3 +9,4 @@ bcrypt>=4.1.0
 python-dateutil>=2.9.0
 extra-streamlit-components>=0.1.60
 psycopg2-binary>=2.9.0
+qrcode[pil]>=7.4.2
